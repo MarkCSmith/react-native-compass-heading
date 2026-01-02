@@ -23,6 +23,7 @@ class CompassHeadingModule(reactContext: ReactApplicationContext) :
     }
 
     private val mApplicationContext: Context = reactContext.applicationContext
+    private var mIsFirstReport: Boolean = true
     private var mAzimuth: Int = 0 // degree
     private var mFilter: Int = 1
     private var sensorManager: SensorManager? = null
@@ -48,6 +49,7 @@ class CompassHeadingModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun start(filter: Int, promise: Promise) {
         try {
+            mIsFirstReport = true
             sensorManager = mApplicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
             val gsensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
             val msensor = sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
@@ -118,7 +120,8 @@ class CompassHeadingModule(reactContext: ReactApplicationContext) :
 
                 Log.d(NAME, "Adjusted azimuth after rotation: $newAzimuth")
 
-                if (abs(mAzimuth - newAzimuth) > mFilter) {
+                if (mIsFirstReport || (abs(mAzimuth - newAzimuth) > mFilter)) {
+                    mIsFirstReport = false
                     mAzimuth = newAzimuth.toInt()
                     val params = Arguments.createMap().apply {
                         putDouble("heading", mAzimuth.toDouble())
